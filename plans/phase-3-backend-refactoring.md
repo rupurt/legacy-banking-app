@@ -27,11 +27,11 @@ The most significant architectural shift: migrating the core framework from Stru
    - Replace manual instantiation (`new BankingService()`) with constructor injection.
 
 ## Verifiable Acceptance Criteria
-- [ ] `pom.xml` contains no references to `org.apache.struts`.
-- [ ] Application starts successfully as a standalone Spring Boot application.
-- [ ] JPA entities correctly map to the existing database schema (or migrated schema via Flyway).
-- [ ] All existing Playwright tests from Phase 2 pass against the new Spring Boot backend.
-- [ ] Invalid transaction types or amounts return a structured `400 Bad Request` instead of a silent failure.
+- [x] `pom.xml` contains no references to `org.apache.struts`.
+- [x] Application starts successfully as a standalone Spring Boot application.
+- [x] JPA entities correctly map to the existing database schema (or migrated schema via Flyway).
+- [x] All existing Playwright tests from Phase 2 pass against the new Spring Boot backend.
+- [x] Invalid transaction types or amounts return a structured `400 Bad Request` instead of a silent failure.
 
 ## Human Acceptance Script (Step-by-Step)
 **Goal:** Verify the system is running on Spring Boot with improved robustness and no loss of feature parity.
