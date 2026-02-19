@@ -7,10 +7,13 @@ import com.banking.cif.model.Account;
 import com.banking.cif.model.Product;
 import com.banking.cif.service.BankingService;
 import com.opensymphony.xwork2.ModelDriven;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.struts2.rest.DefaultHttpHeaders;
 import org.apache.struts2.rest.HttpHeaders;
 
 public class AccountsController implements ModelDriven<Object> {
+    private static final Logger logger = LogManager.getLogger(AccountsController.class);
     
     // Ensure DB is initialized
     static {
@@ -31,7 +34,7 @@ public class AccountsController implements ModelDriven<Object> {
 
     // GET /api/v1/accounts/{id}
     public HttpHeaders show() {
-        System.out.println("AccountsController.show() called with id: [" + id + "]");
+        logger.info("AccountsController.show() called with id: [{}]", id);
         if (id == null || id.isEmpty()) {
             status = 400;
             error = "Bad Request";
@@ -44,20 +47,20 @@ public class AccountsController implements ModelDriven<Object> {
         if (cleanId.endsWith(".json")) {
             cleanId = cleanId.substring(0, cleanId.length() - 5);
         }
-        System.out.println("AccountsController.show() cleaned id: [" + cleanId + "]");
+        logger.info("AccountsController.show() cleaned id: [{}]", cleanId);
 
         try {
             Integer intId = Integer.parseInt(cleanId);
             model = service.getAccount(intId);
-            System.out.println("AccountsController.show() found account: " + model.getAccountId());
+            logger.info("AccountsController.show() found account: {}", model.getAccountId());
         } catch (NumberFormatException nfe) {
-            System.err.println("AccountsController.show() invalid ID format: " + cleanId);
+            logger.error("AccountsController.show() invalid ID format: {}", cleanId);
             status = 400;
             error = "Bad Request";
             message = "Invalid Account ID format: " + cleanId;
             return new DefaultHttpHeaders("show").withStatus(400);
         } catch (Exception e) {
-            System.err.println("AccountsController.show() account not found: " + e.getMessage());
+            logger.error("AccountsController.show() account not found: {}", e.getMessage());
             status = 404;
             error = "Not Found";
             message = "Account not found for ID: " + cleanId;

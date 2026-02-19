@@ -3,6 +3,8 @@ package com.banking.cif.action;
 import com.banking.cif.model.Transaction;
 import com.banking.cif.service.BankingService;
 import com.opensymphony.xwork2.ModelDriven;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.struts2.rest.DefaultHttpHeaders;
 import org.apache.struts2.rest.HttpHeaders;
 
@@ -10,6 +12,7 @@ import java.util.Collection;
 import java.util.List;
 
 public class TransactionsController implements ModelDriven<Object> {
+    private static final Logger logger = LogManager.getLogger(TransactionsController.class);
     
     private String id; // transaction id or account id in custom route
     private Transaction model = new Transaction();
@@ -31,11 +34,15 @@ public class TransactionsController implements ModelDriven<Object> {
 
     // POST /api/v1/transactions
     public HttpHeaders create() {
+        logger.info("TransactionsController.create() called for account: {}, type: {}, amount: {}", 
+                model.getAccountId(), model.getTransactionType(), model.getAmount());
         try {
             service.processTransaction(model);
+            logger.info("Transaction processed successfully for account: {}", model.getAccountId());
             status = 201;
             return new DefaultHttpHeaders("create").withStatus(201);
         } catch (Exception e) {
+            logger.error("Error processing transaction: {}", e.getMessage());
             status = 400;
             error = "Bad Request";
             message = e.getMessage();
@@ -45,11 +52,14 @@ public class TransactionsController implements ModelDriven<Object> {
     
     // GET /api/v1/transactions/account/{id}
     public HttpHeaders show() {
+        logger.info("TransactionsController.show() called with account ID: {}", id);
         try {
             Integer intAccountId = Integer.parseInt(id);
             list = service.getTransactions(intAccountId);
+            logger.info("Found {} transactions for account ID: {}", list.size(), id);
             return new DefaultHttpHeaders("show").disableCaching();
         } catch (Exception e) {
+             logger.error("Error fetching transactions: {}", e.getMessage());
              status = 400;
              error = "Error";
              message = e.getMessage();

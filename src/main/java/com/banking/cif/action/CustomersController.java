@@ -5,6 +5,8 @@ import com.banking.cif.model.Customer;
 import com.banking.cif.service.BankingService;
 import com.banking.cif.util.DatabaseInitializer;
 import com.opensymphony.xwork2.ModelDriven;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.struts2.rest.DefaultHttpHeaders;
 import org.apache.struts2.rest.HttpHeaders;
 
@@ -12,6 +14,7 @@ import java.util.Collection;
 import java.util.List;
 
 public class CustomersController implements ModelDriven<Object> {
+    private static final Logger logger = LogManager.getLogger(CustomersController.class);
     
     // Initialize DB on first load (lazy init via static block in DBConnection or here)
     static {
@@ -31,10 +34,13 @@ public class CustomersController implements ModelDriven<Object> {
 
     // GET /api/v1/customers
     public HttpHeaders index() {
+        logger.info("Fetching all customers");
         try {
             // Bad Practice: Direct DAO access in Controller
             list = customerDAO.findAllWithAccountCount();
+            logger.info("Found {} customers", list.size());
         } catch (Exception e) {
+            logger.error("Error fetching customers: {}", e.getMessage());
             status = 500;
             error = "Internal Server Error";
             message = e.getMessage();
@@ -45,6 +51,7 @@ public class CustomersController implements ModelDriven<Object> {
 
     // GET /api/v1/customers/{id}
     public HttpHeaders show() {
+        logger.info("CustomersController.show() called with id: [{}]", id);
         if (id == null || id.isEmpty()) {
             status = 400;
             error = "Bad Request";
@@ -57,33 +64,40 @@ public class CustomersController implements ModelDriven<Object> {
         if (cleanId.endsWith(".json")) {
             cleanId = cleanId.substring(0, cleanId.length() - 5);
         }
+        logger.info("CustomersController.show() cleaned id: [{}]", cleanId);
 
         try {
             Integer intId = Integer.parseInt(cleanId);
             model = service.getCustomer(intId);
             if (model != null) {
+                logger.info("Found customer: {} (ID: {})", model.getFirstName() + " " + model.getLastName(), model.getCustomerId());
                 model.setAccounts(service.getAccountsByCustomerId(model.getCustomerId()));
             }
         } catch (NumberFormatException nfe) {
             // If ID not found, try Name
+            logger.info("ID is not an integer, attempting to find customer by name: {}", cleanId);
             try {
                 List<Customer> customers = service.getCustomersByName(cleanId);
                 if (customers != null && !customers.isEmpty()) {
                     model = customers.get(0); // Take the first match for lookup
+                    logger.info("Found customer by name: {} (ID: {})", model.getFirstName() + " " + model.getLastName(), model.getCustomerId());
                     model.setAccounts(service.getAccountsByCustomerId(model.getCustomerId()));
                 } else {
+                    logger.warn("Customer not found by ID or Name: {}", cleanId);
                     status = 404;
                     error = "Not Found";
                     message = "Customer not found by ID or Name: " + cleanId;
                     return new DefaultHttpHeaders("show").withStatus(404);
                 }
             } catch (Exception ex) {
+                logger.error("Error searching customer by name: {}", ex.getMessage());
                 status = 404;
                 error = "Not Found";
                 message = ex.getMessage();
                 return new DefaultHttpHeaders("show").withStatus(404);
             }
         } catch (Exception e) {
+            logger.error("Error fetching customer: {}", e.getMessage());
             status = 404;
             error = "Not Found";
             message = e.getMessage();
@@ -94,9 +108,11 @@ public class CustomersController implements ModelDriven<Object> {
 
     // POST /api/v1/customers
     public HttpHeaders create() {
+        logger.info("Creating customer with email: {}", model.getEmail());
         try {
             // Bad Practice: Logic in Controller
             if (customerDAO.emailExists(model.getEmail())) {
+                logger.warn("Customer creation failed: Email {} already exists", model.getEmail());
                 throw new Exception("Email already exists");
             }
             
@@ -106,9 +122,11 @@ public class CustomersController implements ModelDriven<Object> {
             }
 
             customerDAO.create(model);
+            logger.info("Customer created successfully with CIF: {}", model.getCifNumber());
             status = 201;
             return new DefaultHttpHeaders("create").withStatus(201);
         } catch (Exception e) {
+            logger.error("Error creating customer: {}", e.getMessage());
             status = 400;
             error = "Bad Request";
             message = e.getMessage();

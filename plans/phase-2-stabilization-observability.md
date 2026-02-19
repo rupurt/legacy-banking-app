@@ -24,10 +24,10 @@ Establish a safety net of End-to-End (E2E) tests and improve system observabilit
    - Ensure required fields in forms return proper `400 Bad Request` errors instead of 500s.
 
 ## Verifiable Acceptance Criteria
-- [ ] `just playwright-test` (new task) runs and passes all scenarios.
-- [ ] Application logs are emitted in JSON format, viewable in the console or a log file.
-- [ ] Attempting to POST a transaction with a negative amount returns a `400` status code with a descriptive message.
-- [ ] OpenAPI spec is available and matches the behavior of the `CustomersController`.
+- [x] `just playwright-test` (new task) runs and passes all scenarios.
+- [x] Application logs are emitted in JSON format, viewable in the console or a log file.
+- [x] Attempting to POST a transaction with a negative amount returns a `400` status code with a descriptive message.
+- [x] OpenAPI spec is available and matches the behavior of the `CustomersController`.
 
 ## Human Acceptance Script (Step-by-Step)
 **Goal:** Verify that we can now observe and test the system reliably.
