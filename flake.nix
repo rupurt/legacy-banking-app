@@ -14,13 +14,13 @@
       {
         devShells.default = pkgs.mkShell {
           buildInputs = [
-            pkgs.openjdk8
+            pkgs.openjdk21
             pkgs.maven
             pkgs.just
             pkgs.direnv
           ];
 
-          JAVA_HOME="${pkgs.openjdk8.home}";
+          JAVA_HOME="${pkgs.openjdk21.home}";
 
           shellHook = ''
             export PATH="$JAVA_HOME/bin:$PATH"

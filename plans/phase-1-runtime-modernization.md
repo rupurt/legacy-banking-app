@@ -15,10 +15,10 @@ Upgrade the core application runtime from Java 8 to Java 21 (LTS). This provides
 5. **Tooling Update:** Ensure `justfile` and `mvnw` are compatible with the new runtime.
 
 ## Verifiable Acceptance Criteria
-- [ ] `java -version` returns `openjdk version "21.x.x"`.
-- [ ] `mvn clean compile` completes without errors or warnings related to version mismatches.
-- [ ] `just test` passes all existing unit and integration tests on the new runtime.
-- [ ] Application starts successfully via `just run`.
+- [x] `java -version` returns `openjdk version "21.x.x"`.
+- [x] `mvn clean compile` completes without errors or warnings related to version mismatches.
+- [x] `just test` passes all existing unit and integration tests on the new runtime.
+- [x] Application starts successfully via `just run`.
 
 ## Human Acceptance Script (Step-by-Step)
 **Goal:** Verify the application still functions correctly on the new Java version.
