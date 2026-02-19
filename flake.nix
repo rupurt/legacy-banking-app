@@ -18,6 +18,7 @@
             pkgs.maven
             pkgs.just
             pkgs.direnv
+            pkgs.nodejs
           ];
 
           JAVA_HOME="${pkgs.openjdk21.home}";

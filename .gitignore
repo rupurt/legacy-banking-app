@@ -21,3 +21,11 @@ buildNumber.properties
 .direnv
 .envrc
 flake.lock
+
+# Playwright and Node.js
+node_modules/
+playwright-report/
+test-results/
+
+# Temporary and log files
+out.log

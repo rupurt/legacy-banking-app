@@ -24,6 +24,10 @@ lint:
 test:
   ./mvnw test
 
+# Run Playwright E2E tests
+playwright-test:
+  npx playwright test
+
 # Run tests with code coverage (requires jacoco)
 coverage:
   ./mvnw clean test jacoco:report
