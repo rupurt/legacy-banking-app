@@ -1,15 +1,30 @@
 package com.banking.cif.model;
 
+import jakarta.persistence.*;
 import java.math.BigDecimal;
 
+@Entity
+@Table(name = "products")
 public class Product {
+    @Id
     private String productCode;
-    private String name;
-    private String category;
-    private String description;
-    private BigDecimal interestRate;
-    private boolean isActive;
 
+    @Column(nullable = false)
+    private String name;
+
+    @Column(nullable = false)
+    private String category;
+
+    @Column(length = 1000)
+    private String description;
+
+    @Column(precision = 5, scale = 4)
+    private BigDecimal interestRate;
+
+    @Column(nullable = false)
+    private boolean isActive = true;
+
+    // Getters and Setters
     public String getProductCode() { return productCode; }
     public void setProductCode(String productCode) { this.productCode = productCode; }
 

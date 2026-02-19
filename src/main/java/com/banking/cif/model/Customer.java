@@ -1,29 +1,69 @@
 package com.banking.cif.model;
 
-import java.sql.Date;
-import java.sql.Timestamp;
+import jakarta.persistence.*;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
 
+@Entity
+@Table(name = "customers")
 public class Customer {
-    private Integer customerId; // Integer ID
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer customerId;
+
+    @Column(unique = true, nullable = false)
     private String cifNumber;
+
+    @Column(nullable = false)
     private String firstName;
+
+    @Column(nullable = false)
     private String lastName;
-    private Date dateOfBirth;
+
+    @Column(nullable = false)
+    private LocalDate dateOfBirth;
+
+    @Column(unique = true, nullable = false)
     private String email;
+
     private String phoneNumber;
     private String addressLine1;
     private String city;
     private String state;
     private String postalCode;
+
+    @Column(length = 2)
     private String countryCode;
+
     private String kycStatus;
+
+    @Column(length = 4000)
     private String kycDocuments; // JSON
+
     private String riskRating;
-    private Timestamp createdAt;
-    private Timestamp updatedAt;
-    private java.util.List<Account> accounts;
+
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+
+    @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL)
+    private List<Account> accounts;
+
+    @Transient
     private Integer accountCount;
 
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
+
+    // Getters and Setters
     public Integer getCustomerId() { return customerId; }
     public void setCustomerId(Integer customerId) { this.customerId = customerId; }
 
@@ -36,8 +76,8 @@ public class Customer {
     public String getLastName() { return lastName; }
     public void setLastName(String lastName) { this.lastName = lastName; }
 
-    public Date getDateOfBirth() { return dateOfBirth; }
-    public void setDateOfBirth(Date dateOfBirth) { this.dateOfBirth = dateOfBirth; }
+    public LocalDate getDateOfBirth() { return dateOfBirth; }
+    public void setDateOfBirth(LocalDate dateOfBirth) { this.dateOfBirth = dateOfBirth; }
 
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
@@ -69,15 +109,17 @@ public class Customer {
     public String getRiskRating() { return riskRating; }
     public void setRiskRating(String riskRating) { this.riskRating = riskRating; }
 
-    public Timestamp getCreatedAt() { return createdAt; }
-    public void setCreatedAt(Timestamp createdAt) { this.createdAt = createdAt; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 
-    public Timestamp getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(Timestamp updatedAt) { this.updatedAt = updatedAt; }
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 
-    public java.util.List<Account> getAccounts() { return accounts; }
-    public void setAccounts(java.util.List<Account> accounts) { this.accounts = accounts; }
+    public List<Account> getAccounts() { return accounts; }
+    public void setAccounts(List<Account> accounts) { this.accounts = accounts; }
 
-    public Integer getAccountCount() { return accountCount; }
+    public Integer getAccountCount() {
+        return accountCount != null ? accountCount : (accounts != null ? accounts.size() : 0);
+    }
     public void setAccountCount(Integer accountCount) { this.accountCount = accountCount; }
 }
