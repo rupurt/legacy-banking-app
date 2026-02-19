@@ -7,8 +7,9 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
   reporter: 'html',
+  timeout: 60000,
   use: {
-    baseURL: 'http://localhost:8080',
+    baseURL: 'http://localhost:8082',
     trace: 'on-first-retry',
   },
   projects: [
@@ -18,8 +19,9 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: './mvnw jetty:run',
-    url: 'http://localhost:8080',
+    command: './mvnw spring-boot:run -Dspring-boot.run.arguments="--server.port=8082"',
+    url: 'http://localhost:8082',
     reuseExistingServer: !process.env.CI,
+    timeout: 180000,
   },
 });

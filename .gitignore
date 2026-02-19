@@ -24,8 +24,10 @@ flake.lock
 
 # Playwright and Node.js
 node_modules/
+frontend/node/
 playwright-report/
 test-results/
 
 # Temporary and log files
 out.log
+spring*.log

@@ -1,0 +1,54 @@
+#root {
+  width: 100%;
+}
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.header-nav {
+  background-color: #003366 !important; /* Legacy Bank Dark Blue */
+}
+
+.main-layout {
+  flex: 1;
+}
+
+.sidebar {
+  min-height: calc(100vh - 56px);
+  border-right: 1px solid #dee2e6;
+  padding-bottom: 2rem;
+}
+
+.sidebar h3 {
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+  color: #6c757d;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.content-area {
+  background-color: #f8f9fa;
+}
+
+.content-box {
+  background-color: white;
+  padding: 2rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.sidebar-footer {
+  border-top: 1px solid #dee2e6;
+  padding-top: 1rem;
+}
+
+.nav-link.active {
+  font-weight: bold;
+  color: #003366 !important;
+  background-color: #e9ecef;
+  border-radius: 0.25rem;
+}

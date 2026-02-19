@@ -1,0 +1,13 @@
+.gitignore
+.npmignore
+api.ts
+base.ts
+common.ts
+configuration.ts
+docs/Account.md
+docs/AccountsIdPutRequest.md
+docs/Customer.md
+docs/DefaultApi.md
+docs/Transaction.md
+git_push.sh
+index.ts
