@@ -15,7 +15,9 @@ public class AccountDAO {
             account.setAccountNumber(String.valueOf(11111111 + rand.nextInt(88888889))); 
         }
         account.setStatus("ACTIVE");
-        account.setBalance(BigDecimal.ZERO);
+        if (account.getBalance() == null) {
+            account.setBalance(BigDecimal.ZERO);
+        }
 
         String sql = "INSERT INTO accounts (customer_id, product_code, account_number, balance, status) " +
                      "VALUES (?, ?, ?, ?, ?)";
