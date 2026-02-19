@@ -4,32 +4,31 @@ import com.banking.cif.model.Account;
 import com.banking.cif.model.Customer;
 import com.banking.cif.model.Transaction;
 import com.banking.cif.service.BankingService;
-import com.banking.cif.util.DatabaseInitializer;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.sql.Date;
+import java.time.LocalDate;
+import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
+@SpringBootTest
+@Transactional
 public class BankingServiceTest {
 
+    @Autowired
     private BankingService service;
 
-    @Before
-    public void setUp() {
-        DatabaseInitializer.initialize();
-        service = new BankingService();
-    }
-
     @Test
-    public void testCreateCustomer() throws Exception {
+    public void testCreateCustomer() {
         Customer c = new Customer();
         c.setFirstName("Alice");
         c.setLastName("Smith");
         c.setEmail("alice.service@example.com");
-        c.setDateOfBirth(Date.valueOf("1990-01-01"));
+        c.setDateOfBirth(LocalDate.of(1990, 1, 1));
         c.setCifNumber("CIF-SERVICE-001");
         
         Customer created = service.createCustomer(c);
@@ -38,12 +37,12 @@ public class BankingServiceTest {
     }
 
     @Test
-    public void testCreateAccount() throws Exception {
+    public void testCreateAccount() {
         Customer c = new Customer();
         c.setFirstName("Bob");
         c.setLastName("Jones");
         c.setEmail("bob.service@example.com");
-        c.setDateOfBirth(Date.valueOf("1990-01-01"));
+        c.setDateOfBirth(LocalDate.of(1990, 1, 1));
         c.setCifNumber("CIF-SERVICE-002");
         Integer customerId = service.createCustomer(c).getCustomerId();
 
@@ -57,12 +56,12 @@ public class BankingServiceTest {
     }
 
     @Test
-    public void testTransaction() throws Exception {
+    public void testTransaction() {
         Customer c = new Customer();
         c.setFirstName("Charlie");
         c.setLastName("Brown");
         c.setEmail("charlie.service@example.com");
-        c.setDateOfBirth(Date.valueOf("1990-01-01"));
+        c.setDateOfBirth(LocalDate.of(1990, 1, 1));
         c.setCifNumber("CIF-SERVICE-003");
         Integer customerId = service.createCustomer(c).getCustomerId();
 
@@ -91,12 +90,12 @@ public class BankingServiceTest {
     }
 
     @Test
-    public void testGetAccountsByCustomerId() throws Exception {
+    public void testGetAccountsByCustomerId() {
         Customer c = new Customer();
         c.setFirstName("Eve");
         c.setLastName("Online");
         c.setEmail("eve.service@example.com");
-        c.setDateOfBirth(Date.valueOf("1990-01-01"));
+        c.setDateOfBirth(LocalDate.of(1990, 1, 1));
         c.setCifNumber("CIF-SERVICE-005");
         Integer customerId = service.createCustomer(c).getCustomerId();
 
@@ -110,17 +109,17 @@ public class BankingServiceTest {
         a2.setProductCode("SAV-HYS");
         service.createAccount(a2);
 
-        java.util.List<Account> accounts = service.getAccountsByCustomerId(customerId);
+        List<Account> accounts = service.getAccountsByCustomerId(customerId);
         assertEquals(2, accounts.size());
     }
 
-    @Test(expected = Exception.class)
-    public void testWithdrawalInsufficient() throws Exception {
+    @Test
+    public void testWithdrawalInsufficient() {
         Customer c = new Customer();
         c.setFirstName("Dave");
         c.setLastName("Miller");
         c.setEmail("dave.service@example.com");
-        c.setDateOfBirth(Date.valueOf("1990-01-01"));
+        c.setDateOfBirth(LocalDate.of(1990, 1, 1));
         c.setCifNumber("CIF-SERVICE-004");
         Integer customerId = service.createCustomer(c).getCustomerId();
 
@@ -134,6 +133,6 @@ public class BankingServiceTest {
         t.setTransactionType("WITHDRAWAL");
         t.setAmount(new BigDecimal("100.00"));
         
-        service.processTransaction(t); // Should throw Exception
+        assertThrows(RuntimeException.class, () -> service.processTransaction(t));
     }
 }

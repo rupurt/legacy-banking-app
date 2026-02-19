@@ -33,6 +33,6 @@ coverage:
   ./mvnw clean test jacoco:report
   @echo "Coverage report: target/site/jacoco/index.html"
 
-# Run the application using Jetty
+# Run the application using Spring Boot
 run:
-  ./mvnw jetty:run
+  ./mvnw spring-boot:run

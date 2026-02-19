@@ -1,165 +1,162 @@
 package com.banking.cif.service;
 
-import com.banking.cif.dao.AccountDAO;
-import com.banking.cif.dao.CustomerDAO;
-import com.banking.cif.dao.ProductDAO;
-import com.banking.cif.dao.TransactionDAO;
 import com.banking.cif.model.Account;
 import com.banking.cif.model.Customer;
 import com.banking.cif.model.Product;
 import com.banking.cif.model.Transaction;
-import com.banking.cif.util.DBConnection;
+import com.banking.cif.repository.AccountRepository;
+import com.banking.cif.repository.CustomerRepository;
+import com.banking.cif.repository.ProductRepository;
+import com.banking.cif.repository.TransactionRepository;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.List;
+import java.util.Random;
 
+@Service
+@Transactional
 public class BankingService {
     private static final Logger logger = LogManager.getLogger(BankingService.class);
 
-    private CustomerDAO customerDAO = new CustomerDAO();
-    private AccountDAO accountDAO = new AccountDAO();
-    private ProductDAO productDAO = new ProductDAO();
-    private TransactionDAO transactionDAO = new TransactionDAO();
+    private final CustomerRepository customerRepository;
+    private final AccountRepository accountRepository;
+    private final ProductRepository productRepository;
+    private final TransactionRepository transactionRepository;
+
+    public BankingService(CustomerRepository customerRepository,
+                          AccountRepository accountRepository,
+                          ProductRepository productRepository,
+                          TransactionRepository transactionRepository) {
+        this.customerRepository = customerRepository;
+        this.accountRepository = accountRepository;
+        this.productRepository = productRepository;
+        this.transactionRepository = transactionRepository;
+    }
 
     // --- Customer Operations ---
 
-    public Customer createCustomer(Customer customer) throws Exception {
+    public Customer createCustomer(Customer customer) {
         logger.info("Creating customer with email: {}", customer.getEmail());
-        if (customerDAO.emailExists(customer.getEmail())) {
+        if (customerRepository.existsByEmail(customer.getEmail())) {
             logger.warn("Customer creation failed: Email {} already exists", customer.getEmail());
-            throw new Exception("Email already exists");
+            throw new RuntimeException("Email already exists");
         }
-        // Basic validation
         if (customer.getCifNumber() == null || customer.getCifNumber().isEmpty()) {
-             // Generate CIF if missing or throw error? Spec says provided in body for create.
-             // Test says "CIF-2024-001".
+            customer.setCifNumber("CIF-" + System.currentTimeMillis());
         }
-        return customerDAO.create(customer);
+        return customerRepository.save(customer);
     }
 
-    public Customer getCustomer(Integer id) throws Exception {
+    public Customer getCustomer(Integer id) {
         logger.info("Fetching customer with ID: {}", id);
-        Customer c = customerDAO.findById(id);
-        if (c == null) {
-            logger.warn("Customer with ID {} not found", id);
-            throw new Exception("Customer not found");
-        }
-        return c;
+        return customerRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Customer not found"));
     }
 
-    public List<Customer> getCustomersByName(String name) throws Exception {
+    public List<Customer> getCustomersByName(String name) {
         logger.info("Searching customers by name: {}", name);
-        return customerDAO.findByName(name);
+        return customerRepository.findByFirstNameContainingOrLastNameContaining(name, name);
     }
 
-    public List<Customer> getAllCustomers() throws Exception {
+    public List<Customer> getAllCustomers() {
         logger.info("Fetching all customers");
-        return customerDAO.findAllWithAccountCount();
+        return customerRepository.findAllWithAccounts();
     }
 
     // --- Account Operations ---
 
-    public Account createAccount(Account account) throws Exception {
+    public Account createAccount(Account account) {
         logger.info("Creating account for customer: {}, product: {}", account.getCustomerId(), account.getProductCode());
-        Product p = productDAO.findByCode(account.getProductCode());
-        if (p == null) {
-            logger.warn("Account creation failed: Invalid Product Code {}", account.getProductCode());
-            throw new Exception("Invalid Product Code");
-        }
-        // validate customer exists
-        if (customerDAO.findById(account.getCustomerId()) == null) {
-            logger.warn("Account creation failed: Customer {} not found", account.getCustomerId());
-            throw new Exception("Customer not found");
+        
+        Product product = productRepository.findById(account.getProductCode())
+                .orElseThrow(() -> new RuntimeException("Invalid Product Code"));
+        
+        Customer customer = customerRepository.findById(account.getCustomerId())
+                .orElseThrow(() -> new RuntimeException("Customer not found"));
+
+        account.setCustomer(customer);
+        account.setProduct(product);
+
+        if (account.getAccountNumber() == null) {
+            Random rand = new Random();
+            account.setAccountNumber(String.valueOf(11111111 + rand.nextInt(88888889)));
         }
         
-        return accountDAO.create(account);
+        if (account.getBalance() == null) {
+            account.setBalance(BigDecimal.ZERO);
+        }
+
+        return accountRepository.save(account);
     }
 
-    public Account getAccount(Integer id) throws Exception {
+    public Account getAccount(Integer id) {
         logger.info("Fetching account with ID: {}", id);
-        Account a = accountDAO.findById(id);
-        if (a == null) {
-            logger.warn("Account with ID {} not found", id);
-            throw new Exception("Account not found");
-        }
-        return a;
+        return accountRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Account not found"));
     }
 
-    public List<Account> getAccountsByCustomerId(Integer customerId) throws Exception {
+    public List<Account> getAccountsByCustomerId(Integer customerId) {
         logger.info("Fetching accounts for customer: {}", customerId);
-        return accountDAO.findByCustomerId(customerId);
+        return accountRepository.findByCustomerCustomerId(customerId);
     }
 
-    public void updateAccountStatus(Integer id, String status) throws Exception {
+    public void updateAccountStatus(Integer id, String status) {
         logger.info("Updating account status for ID {}: {}", id, status);
-        if (accountDAO.findById(id) == null) {
-            logger.warn("Account status update failed: Account {} not found", id);
-            throw new Exception("Account not found");
-        }
-        accountDAO.updateStatus(id, status);
+        Account account = getAccount(id);
+        account.setStatus(status);
+        accountRepository.save(account);
     }
 
     // --- Transaction Operations ---
 
-    public Transaction processTransaction(Transaction transaction) throws Exception {
+    public Transaction processTransaction(Transaction transaction) {
         logger.info("Processing {} for account {}: amount {}", 
                 transaction.getTransactionType(), transaction.getAccountId(), transaction.getAmount());
         
         if (transaction.getAmount() == null || transaction.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
             logger.warn("Transaction failed: Invalid amount {}", transaction.getAmount());
-            throw new Exception("Transaction amount must be positive");
+            throw new RuntimeException("Transaction amount must be positive");
         }
 
-        // Atomic transaction
-        try (Connection conn = DBConnection.getConnection()) {
-            conn.setAutoCommit(false);
-            try {
-                Account account = accountDAO.findById(conn, transaction.getAccountId());
-                if (account == null) {
-                    logger.warn("Transaction failed: Account {} not found", transaction.getAccountId());
-                    throw new Exception("Account not found");
-                }
+        Account account = accountRepository.findById(transaction.getAccountId())
+                .orElseThrow(() -> new RuntimeException("Account not found"));
 
-                BigDecimal newBalance = account.getBalance();
-                if ("DEPOSIT".equals(transaction.getTransactionType())) {
-                    newBalance = newBalance.add(transaction.getAmount());
-                } else if ("WITHDRAWAL".equals(transaction.getTransactionType()) || "WITHDRAW".equals(transaction.getTransactionType())) {
-                    if (newBalance.compareTo(transaction.getAmount()) < 0) {
-                        logger.warn("Transaction failed: Insufficient funds in account {}", transaction.getAccountId());
-                        throw new Exception("Insufficient funds");
-                    }
-                    newBalance = newBalance.subtract(transaction.getAmount());
-                } else {
-                     logger.warn("Transaction failed: Invalid transaction type {}", transaction.getTransactionType());
-                     throw new Exception("Invalid transaction type");
-                }
-
-                // Update account
-                accountDAO.updateBalance(conn, account.getAccountId(), newBalance);
-
-                // Create transaction record
-                transaction.setBalanceAfter(newBalance);
-                Transaction created = transactionDAO.create(conn, transaction);
-
-                conn.commit();
-                logger.info("Transaction processed successfully for account {}. New balance: {}", 
-                        transaction.getAccountId(), newBalance);
-                return created;
-
-            } catch (Exception e) {
-                conn.rollback();
-                logger.error("Transaction failed for account {}: {}", transaction.getAccountId(), e.getMessage());
-                throw e;
+        BigDecimal newBalance = account.getBalance();
+        String type = transaction.getTransactionType();
+        
+        if ("DEPOSIT".equals(type)) {
+            newBalance = newBalance.add(transaction.getAmount());
+        } else if ("WITHDRAWAL".equals(type) || "WITHDRAW".equals(type)) {
+            if (newBalance.compareTo(transaction.getAmount()) < 0) {
+                logger.warn("Transaction failed: Insufficient funds in account {}", transaction.getAccountId());
+                throw new RuntimeException("Insufficient funds");
             }
+            newBalance = newBalance.subtract(transaction.getAmount());
+        } else {
+             logger.warn("Transaction failed: Invalid transaction type {}", type);
+             throw new RuntimeException("Invalid transaction type");
         }
+
+        // Update account
+        account.setBalance(newBalance);
+        accountRepository.save(account);
+
+        // Create transaction record
+        transaction.setAccount(account);
+        transaction.setBalanceAfter(newBalance);
+        Transaction created = transactionRepository.save(transaction);
+
+        logger.info("Transaction processed successfully for account {}. New balance: {}", 
+                transaction.getAccountId(), newBalance);
+        return created;
     }
 
-    public List<Transaction> getTransactions(Integer accountId) throws Exception {
+    public List<Transaction> getTransactions(Integer accountId) {
         logger.info("Fetching transactions for account: {}", accountId);
-        return transactionDAO.findByAccountId(accountId);
+        return transactionRepository.findByAccountAccountId(accountId);
     }
 }
